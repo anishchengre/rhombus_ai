@@ -1,92 +1,34 @@
+
+
 import pandas as pd
-import numpy as np
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
-def load_data(file_path: str) -> pd.DataFrame:
-    """
-    Loads data from a CSV or Excel file into a DataFrame.
-    """
-    if file_path.endswith('.csv'):
-        df = pd.read_csv(file_path)
-    elif file_path.endswith(('.xls', '.xlsx')):
-        df = pd.read_excel(file_path)
-    else:
-        raise ValueError("File format not supported. Please provide a CSV or Excel file.")
-    return df
+from api.utils import infer_and_convert_data_types
+from .serializers import FileUploadSerializer
+from rest_framework import status
+import io
 
+@api_view(['POST'])
+def upload_file(request):
+    if request.method == 'POST':
+        serializer = FileUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            # Get the uploaded file
+            uploaded_file = request.FILES['file']
+            file_content = uploaded_file.read()
 
-def infer_and_convert_data_types(df: pd.DataFrame, unique_ratio_threshold: float = 0.5) -> pd.DataFrame:
-    """
-    Infers and converts data types of each column in a DataFrame.
-    Columns with object types are checked and converted to the most appropriate types.
-    """
-    for col in df.columns:
-        original_dtype = df[col].dtype
-        
-        # Attempt to convert column to numeric if not already numeric
-        if pd.api.types.is_object_dtype(df[col]):
-            try:
-                converted_numeric = pd.to_numeric(df[col], errors='coerce')
-                # Only apply conversion if some non-NaN numeric values were found
-                if converted_numeric.notna().sum() > 0:
-                    df[col] = converted_numeric
-                    continue
-            except Exception:
-                pass  # Skip if not convertible to numeric
+            # Load the CSV file into a DataFrame
+            df = pd.read_csv(io.BytesIO(file_content))
 
-        # Attempt to convert to datetime if column is still object and not numeric
-        if pd.api.types.is_object_dtype(df[col]):
-            try:
-                converted_datetime = pd.to_datetime(df[col], errors='coerce', format='%d/%m/%Y')
-                if converted_datetime.notna().sum() > 0:
-                    df[col] = converted_datetime
-                    continue
-            except Exception:
-                pass  # Skip if not convertible to datetime
+            # Process the data here (use the infer_and_convert_data_types function)
+            df = infer_and_convert_data_types(df)
 
-        # Convert to Categorical if unique ratio is below threshold and column is still object
-        if pd.api.types.is_object_dtype(df[col]):
-            unique_ratio = len(df[col].unique()) / len(df[col])
-            if unique_ratio < unique_ratio_threshold:
-                df[col] = pd.Categorical(df[col])
-            else:
-                # Ensure non-numeric, non-date object columns remain as strings
-                df[col] = df[col].astype(str)
-
-    # Downcast numeric columns for memory optimization
-    for col in df.select_dtypes(include=['int64', 'float64']).columns:
-        df[col] = pd.to_numeric(df[col], downcast='integer' if pd.api.types.is_integer_dtype(df[col]) else 'float')
-
-    return df
+            # Convert the DataFrame back to JSON and send it back to the client
+            response_data = df.to_dict(orient='records')
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
-def main(file_path: str):
-    """
-    Main function to load data, infer data types, and display results.
-    """
-    # Load the data
-    df = load_data(file_path)
-    print("Data types before inference:")
-    print(df.dtypes)
-
-    # Infer and convert data types
-    df = infer_and_convert_data_types(df)
-
-    print("\nData types after inference:")
-    print(df.dtypes)
-    print("\nSample DataFrame:")
-    print(df.head())
-
-# Example usage
-if __name__ == "__main__":
-    file_path = "/home/anishdchengre/Desktop/rhombus_ai/api/sample_data.csv"  # Replace with your file path
-    main(file_path)
-
-
-
-#     Data types after inference:
-# Name                 object
-# Birthdate    datetime64[ns]
-# Score               float64
-# Grade                object
-# dtype: object
