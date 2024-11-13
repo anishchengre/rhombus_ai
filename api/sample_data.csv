@@ -1,0 +1,8 @@
+Name,Age,Birthdate,Score,Gender,Address,Enrolled,Subscription Date,Active
+Alice,30,1990-01-01,90,F,"123 Elm St, NY",Yes,2021-05-01,Yes
+Bob,45,1980-05-12,75,M,"456 Oak St, LA",No,2020-04-20,No
+Charlie,10,Invalid Date,85,M,"789 Pine St, TX",Yes,2022-03-15,Yes
+David,25,1995-07-25,N/A,M,"123 Maple Ave, CA",No,Invalid Date,Yes
+Eve,35,1985-10-30,88,F,"101 Birch Rd, FL",Yes,2023-01-10,No
+Frank,28,1992-12-15,93,M,"202 Cedar Blvd, NV",Yes,2021-12-05,Yes
+Grace,22,1999-03-22,Not Available,F,"303 Ash St, MA",No,2019-08-19,No
