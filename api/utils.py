@@ -78,4 +78,10 @@ def main(file_path: str):
     print("\nSample DataFrame:")
     print(df.head())
 
+# Example usage
+if __name__ == "__main__":
+    file_path = "/home/anishdchengre/Desktop/rhombus_ai/api/sample_data.csv"  # Replace with your file path
+    main(file_path)
+
+
 
